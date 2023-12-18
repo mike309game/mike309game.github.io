@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body>
+		<script src="md5.js"></script>
+		<script>
+			function hexStringToByteArray(hexString) {
+				var numBytes = hexString.length / 2;
+				var byteArray = '';
+				//for (var i=numBytes-1; i >= 0; i--) {
+				for (var i=0; i<numBytes; i++) {
+					byteArray += String.fromCharCode(parseInt(hexString.substr(i*2, 2), 16));
+				}
+				return byteArray;
+			}
+			function GetResult() {
+				let value = document.getElementById('rssUrl').value;
+				let lump = document.getElementById('lump');
+				let themd5 = md5(`MRJA${value}PHMD`, undefined, true);
+				lump.innerHTML = `<p>${value}: <b>${btoa(themd5)}</b></p>` + lump.innerHTML;
+			}
+		</script>
+		<p>This only works properly with the filename and extension, i can't be bothered to recreate the fucked up thing that yoyo does for making the password</p>
+		<input type="text" id="rssUrl" placeholder="uuid.zip"></input>
+		<button onclick = "GetResult()">Get</button>
+		<div id="lump"></div>
+	</body>
+</html>
