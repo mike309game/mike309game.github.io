@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+	<!--
+	
+	Code somewhat kind of but not really yoinked from https://yal.cc/game-tools/yytextureview/
+	
+	-->
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name ="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta charset="utf-8"/>
+
+        <!-- Set the title bar of the page -->
+        <title>CStory Background shit</title>
+
+        <!-- Set the background colour of the document -->
+        <style>
+            div {
+                /*color: #cccccc;*/
+                /*margin: 0px;
+                padding: 0px;
+                border: 0px;*/
+				margin: 8px;
+				-ms-interpolation-mode: nearest-neighbor;
+				image-rendering: optimizeSpeed;
+				image-rendering: -moz-crisp-edges;
+				image-rendering: -webkit-optimize-contrast;
+				image-rendering: -o-crisp-edges;
+				image-rendering: pixelated;
+            }
+
+            canvas {
+                image-rendering: optimizeSpeed;
+                -webkit-interpolation-mode: nearest-neighbor;
+                -ms-touch-action: none;
+                touch-action: none;
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
+				width: 50%;
+            }
+			
+            .funny {
+				border: 1px solid grey;
+				background-repeat: repeat;
+				box-shadow: 5px 5px 8px lightgrey;
+			}
+			.absol {
+				position: absolute;
+				margin: 0;
+				left: 0;
+				top: 0;
+			}
+			.csframe {
+				position: absolute;
+				margin: 0;
+				width:128px;
+				height:128px;
+				/*background-color: #7fffd414;*/
+				border:1px solid #015d00c2;
+			}
+			.csframe:hover {
+				background-color: #7fffd414;
+			}
+			.csframe:hover:before {
+				position:absolute;
+				left:-1px;
+				top:-1px;
+				border:1px solid red;
+				z-index: 1;
+				cursor: pointer;
+				width:320px;
+				height:240px;
+				content:"";
+				pointer-events: none;
+			}
+			
+			/* width */
+			::-webkit-scrollbar {
+				width: 8px;
+				height: 8px;
+			}
+			
+			/* Track */
+			::-webkit-scrollbar-track {
+			background: #f1f1f1; 
+			}
+			
+			/* Handle */
+			::-webkit-scrollbar-thumb {
+			background: #888; 
+			}
+			
+			/* Handle on hover */
+			::-webkit-scrollbar-thumb:hover {
+			background: #555; 
+			}
+			
+        </style>
+    </head>
+
+    <body>
+		<center>
+		<h1 id="bigass">Cave Story possible camera positions of screenshot within map by lining up known background against screenshot</h1>
+		<i>hint: drag & drop images (.pbm included) inside the upload button to load images</i>
+		<br>
+		<br>
+		<br>
+		<!---Background upload--------------------------------------------->
+		<div>
+			<label for="bgUpload">Upload background</label>
+			<input
+			type="file"
+			id="bgUpload"
+			name="bgUpload"
+			accept=".pbm, .bmp, .webp, .png"
+			multiple />
+			<div class="funny" style="width:64px; height:64px; position:relative;" id="cstorybg"></div>
+		</div>
+		<!---Line up the background with a screenshot within the map------->
+		<div>
+			<div>
+				<label for="scrUpload">Upload screenshot</label>
+				<input
+				type="file"
+				id="scrUpload"
+				name="scrUpload"
+				accept=".bmp, .webp, .png"
+				multiple />
+				<br/>
+				<label id="bgOffXLabel" for="bgOffX">Offset X</label>
+				<input id="bgOffX" type="range" min="0" max="63" step="1" value="0"/>
+				<label id="bgOffYLabel"for="bgOffY">Offset Y</label>
+				<input id="bgOffY" type="range" min="0" max="63" step="1" value="0"/>
+				<label id="bgOpacityLabel"for="bgOpacity">Opacity</label>
+				<input id="bgOpacity" type="range" min="0" max="100" step="1" value="50"/>
+			</div>
+			<div class="funny" style="position: relative; width:320px; height:240px">
+				<div class="absol" style="width:320px; height:240px;" id="screenshotDiv"></div>
+				<div class="absol" style="width:320px; height:240px;" id="bgOverlayDiv"></div>
+			</div>
+		</div>
+		<!---Visualise all possible frame positions---------------------->
+		<div>
+			<label for="mapUpload">Upload map</label>
+			<input
+			type="file"
+			id="mapUpload"
+			name="mapUpload"
+			accept=".bmp, .webp, .png"
+			multiple />
+			
+			<table>
+				<td>
+					<div class="funny" style="width:60vmax; height:90vh; overflow: overlay; position: relative;">
+						<img id="mapImage" class="absol"></img>
+						<div id="framesDiv" class="absol"></div>
+					</div>
+				</td>
+				<td>
+					<div class="funny" style="position: relative; width:320px; height:240px">
+						<img id="screenCmpImg" class="absol"></img>
+						<div id="mapView" class="absol" style="width: 320px; height:240px; background:null; background-position: initial; background-repeat: repeat; opacity: 0.5;"></div>
+					</div>
+					<input id="mapViewOpacity" type="range" min="0" max="100" step="1" value="50"/>
+				</td>
+			</table>
+		</div>
+		
+		<br/>
+		
+		<script>
+			if((Math.random()*100) < 2){
+				document.getElementById('bigass').textContent = 'What a mouthful!';
+			}
+			const uploadInput = document.getElementById('bgUpload');
+			const scrUploadInput = document.getElementById('scrUpload');
+			const mapUploadInput = document.getElementById('mapUpload');
+			
+			const screenshotDiv = document.getElementById('screenshotDiv');
+			const bgOverlayDiv = document.getElementById('bgOverlayDiv');
+			
+			const framesDiv = document.getElementById('framesDiv');
+			const mapImage = document.getElementById('mapImage');
+			
+			const screenCmpImg = document.getElementById('screenCmpImg');
+			const mapView = document.getElementById('mapView');
+			
+			//images
+			var bgObj = null;
+			var scrObj = null;
+			var mapObj = null;
+			
+			var mapHasLoaded = false;
+			
+			const overlayX = document.getElementById('bgOffX');
+			const overlayY = document.getElementById('bgOffY');
+			const opacityInput = document.getElementById('bgOpacity');
+			
+			const mapViewOpacity = document.getElementById('mapViewOpacity');
+			
+			let updateOverlay = function (a) {
+				document.getElementById('bgOffXLabel').textContent = `Offset X ${overlayX.value}`;
+				document.getElementById('bgOffYLabel').textContent = `Offset Y ${overlayY.value}`;
+				document.getElementById('bgOpacityLabel').textContent = `Opacity ${opacityInput.value}`;
+				//setting background has to be the first thing to be done otherwise
+				//things get reset
+				bgOverlayDiv.style.background = `url(${bgObj})`;
+				bgOverlayDiv.style.opacity = `${opacityInput.value/100.0}`;
+				bgOverlayDiv.style.backgroundPosition = `${64-overlayX.value}px ${64-overlayY.value}px`;
+				generateFrames();
+			}
+			/*
+			
+			BACKGROUND_TYPE_MOVE_DISTANT just gets the camera(frame)'s current position and halves it,
+			then subtracts the background position with the result.
+			
+			The +8 is because the frame origin actually starts at 8,8 in the map.
+			The -1 is because of the css border.
+			
+			*/
+			let generateFrames = function() {
+				let e;
+				while(e = framesDiv.firstChild) {
+					e.remove();
+				}
+				if(!mapHasLoaded) {
+					return;
+				}
+				let w = mapImage.width;
+				let h = mapImage.height;
+				for(let yy = 8+Number(overlayY.value)*2; (yy+240) < h; yy += 128) {
+					for(let xx = 8+Number(overlayX.value)*2; (xx+320) < w; xx += 128) {
+						const f = document.createElement("div");
+						framesDiv.appendChild(f);
+						f.setAttribute('class','csframe');
+						f.setAttribute('style',`left: ${xx-1}px; top: ${yy-1}px;`);
+						f.setAttribute('frameX', `${xx}`);
+						f.setAttribute('frameY', `${yy}`);
+						f.setAttribute('onclick', "clickFrame(this)");
+					}
+				}
+			}
+			
+			let clickFrame = function(e) {
+				let x = Number(e.getAttribute('frameX'));
+				let y = Number(e.getAttribute('frameY'));
+				mapView.style.background = `url(${mapObj})`
+				mapView.style.backgroundPosition = `${-x}px ${-y}px`;
+			}
+			
+			let mapLoaded = function() {
+				mapHasLoaded = true;
+				generateFrames();
+			}
+			
+			//upload background img
+			uploadInput.oninput = function() {
+				if(uploadInput.files > 1 || uploadInput.files == 0) {
+					alert('one file please');
+					return;
+				}
+				bgObj = URL.createObjectURL(uploadInput.files[0]);
+				document.getElementById('cstorybg').style.background = `url(${bgObj})`;
+				updateOverlay();
+				uploadInput.value = null;
+			}
+			scrUploadInput.oninput = function() {
+				if(scrUploadInput.files > 1 || scrUploadInput.files == 0) {
+					alert('one file please');
+					return;
+				}
+				scrObj = URL.createObjectURL(scrUploadInput.files[0]);
+				screenshotDiv.style.background = `url(${scrObj})`;
+				screenCmpImg.src = scrObj;
+				scrUploadInput.value = null;
+			}
+			mapUploadInput.oninput = function() {
+				if(mapUploadInput.files > 1 || mapUploadInput.files == 0) {
+					alert('one file please');
+					return;
+				}
+				mapObj = URL.createObjectURL(mapUploadInput.files[0]);
+				
+				mapHasLoaded = false;
+				mapImage.src = mapObj;
+				mapImage.onload = mapLoaded;
+				mapUploadInput.value = null;
+			}
+			
+			overlayX.addEventListener("input", updateOverlay);
+			overlayY.addEventListener("input", updateOverlay);
+			opacityInput.addEventListener("input", updateOverlay);
+			mapViewOpacity.addEventListener("input", function() {
+				mapView.style.opacity = `${mapViewOpacity.value/100.0}`;
+			});
+		</script>
+		</center>
+    </body>
+</html>
