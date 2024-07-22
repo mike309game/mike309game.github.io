@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name ="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta charset="utf-8"/>
+
+        <!-- Set the title bar of the page -->
+        <title>Biblically Accurate Undertale patch</title>
+
+        <!-- Set the background colour of the document -->
+        <style>
+            div {
+                /*color: #cccccc;*/
+                /*margin: 0px;
+                padding: 0px;
+                border: 0px;*/
+				margin: 8px;
+				-ms-interpolation-mode: nearest-neighbor;
+				image-rendering: optimizeSpeed;
+				image-rendering: -moz-crisp-edges;
+				image-rendering: -webkit-optimize-contrast;
+				image-rendering: -o-crisp-edges;
+				image-rendering: pixelated;
+            }
+
+            canvas {
+                image-rendering: optimizeSpeed;
+                -webkit-interpolation-mode: nearest-neighbor;
+                -ms-touch-action: none;
+                touch-action: none;
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
+				width: 50%;
+            }
+			
+            .funny {
+				border: 1px solid grey;
+				background-repeat: repeat;
+				box-shadow: 5px 5px 8px lightgrey;
+			}
+			.absol {
+				position: absolute;
+				margin: 0;
+				left: 0;
+				top: 0;
+			}
+			.csframe {
+				position: absolute;
+				margin: 0;
+				width:128px;
+				height:128px;
+				/*background-color: #7fffd414;*/
+				border:1px solid #015d00c2;
+			}
+			.csframe:hover {
+				background-color: #7fffd414;
+			}
+			.csframe:hover:before {
+				position:absolute;
+				left:-1px;
+				top:-1px;
+				border:1px solid red;
+				z-index: 1;
+				cursor: pointer;
+				width:320px;
+				height:240px;
+				content:"";
+				pointer-events: none;
+			}
+			
+			/* width */
+			::-webkit-scrollbar {
+				width: 8px;
+				height: 8px;
+			}
+			
+			/* Track */
+			::-webkit-scrollbar-track {
+			background: #f1f1f1; 
+			}
+			
+			/* Handle */
+			::-webkit-scrollbar-thumb {
+			background: #888; 
+			}
+			
+			/* Handle on hover */
+			::-webkit-scrollbar-thumb:hover {
+			background: #555; 
+			}
+			
+        </style>
+    </head>
+
+    <body>
+		<center>
+		<h1 id="bigass">Biblically Accurate Undertale (Undertale in GameMaker 8)</h1>
+		<i>Upload data.win to obtain the download</i>
+		<br>
+		<br>
+		<br>
+		The game will <i><b>NOT</b></i> launch in the first attempt, blame gm8 for sucking in windows 10
+		<br>
+		<br>
+		<br>
+		<!---Wad upload---------------------------------------------------->
+		<div>
+			<label for="wadUpload">Upload data (steam windows 1.08)</label>
+			<input
+			type="file"
+			id="wadUpload"
+			name="wadUpload"
+			accept=".win"
+			multiple />
+		</div>
+		<div id="status">Status</div>
+		<script>
+			const uploadInput = document.getElementById('wadUpload');
+			const status = document.getElementById('status');
+			status.innerText = '';
+			
+			const downloadURL = (data, fileName) => {
+				const a = document.createElement('a')
+				a.href = data
+				a.download = fileName
+				document.body.appendChild(a)
+				a.style.display = 'none'
+				a.click()
+				a.remove()
+			}
+			const wait = async () => {return await new Promise(resolve => setTimeout(resolve, 1));};
+			
+			//upload background img
+			uploadInput.oninput = async function() {
+				if(uploadInput.files > 1 || uploadInput.files == 0) {
+					alert('one file please');
+					return;
+				}
+				let wadBuffer = await uploadInput.files[0].arrayBuffer();
+				let wadBytes = new Uint8Array(wadBuffer);
+				let checksum = 0;
+				status.innerText = 'Checksumming'; await wait();
+				for(var by of wadBytes) {
+					checksum += by;
+					checksum &= 0x7FFFFFFF;
+				}
+				if(checksum != 284204073) { //1.08 windows steam checksum
+					status.innerText = 'Wrong checksum'; await wait();
+					alert("File provided is not Undertale 1.08 Steam");
+					status.innerText = '';
+					return;
+				}
+				//github won't let me push a file bigger than 100mb and won't let me download a file from releases from github.io
+				status.innerText = 'Downloading patch part1'; await wait();
+				let patch1Fetch = await fetch("utgm8/utgm8rel1patch1.bin");
+				let patch1Buffer = await patch1Fetch.arrayBuffer();
+				let patch1Bytes = new Uint8Array(patch1Buffer);
+				status.innerText = 'Downloading patch part2'; await wait();
+				let patch2Fetch = await fetch("utgm8/utgm8rel1patch2.bin");
+				let patch2Buffer = await patch2Fetch.arrayBuffer();
+				let patch2Bytes = new Uint8Array(patch2Buffer);
+				status.innerText = 'Patching'; await wait();
+				let wadOff = 0;
+				for(var i = 0; i < patch1Bytes.length; i++, wadOff++) {
+					patch1Bytes[i] ^= wadBytes[wadOff % wadBytes.length];
+				}
+				for(var i = 0; i < patch2Bytes.length; i++, wadOff++) {
+					patch2Bytes[i] ^= wadBytes[wadOff % wadBytes.length];
+				}
+				
+				status.innerText = 'Create download'; await wait();
+				let blob = new Blob([patch1Bytes, patch2Bytes], {type: 'application/zip'});
+				let url = window.URL.createObjectURL(blob);
+				status.innerText = 'Finished'; await wait();
+				downloadURL(url, "utgm8rel1.zip");
+				setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+				status.innerText = '';
+			}
+		</script>
+		</center>
+    </body>
+</html>
